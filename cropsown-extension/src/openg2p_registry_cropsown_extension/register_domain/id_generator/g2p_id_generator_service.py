@@ -14,8 +14,6 @@ class G2PIdGeneratorService(BaseService, G2PIdGeneratorInterface):
             return IdAffix(prefix="FR-", suffix="")
         if mnemonic == "cropsown":
             return IdAffix(prefix="CS-", suffix="")
-        if mnemonic == "land":
-            return IdAffix(prefix="LND-", suffix="")
         if mnemonic == "cluster":
             return IdAffix(prefix="CLR-", suffix="")
 

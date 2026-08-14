@@ -31,10 +31,24 @@
       "farmer_id": "{{ farmer.get('farmer_id', '') }}",
       "fayda_fan_id": "{{ farmer_identifier.get('identifier_value', '') }}",
       "farmer_name": "{{ full_name }}",
+      "farmer_odk_ack_id": "{{ farmer.get('odk_ack_id', '') or crop_sown.get('odk_ack_id', '') }}",
       "land_uuid": "{{ land_uuid }}",
       "status": "{{ (crop_sown.get('status', '') or '') | upper | replace(' ', '_') }}",
       "production_year": "{{ crop_sown.get('production_year', '') }}",
       "lifecycle_stage": "{{ lifecycle_stage }}"
+    }
+  ],
+  "cs_land_details": [
+    {
+      "land_uuid": "{{ land_uuid }}",
+      "land_id": "{{ land_id }}",
+      "is_land_registered": {{ "true" if land_id else "false" }},
+      "ownership_type": "{{ (farm.get('land_tenure', '') or '') | upper | replace(' ', '_') }}",
+      "soil_fertility_type": "{{ (farm.get('soil_fertility', '') or '') | upper }}",
+      "plot_category": "{{ (farm.get('plot_category', '') or '') | upper | replace(' ', '_') }}",
+      "land_area": "{{ farm.get('area', '') }}",
+      "unit": "HECTARE",
+      "sub_kebele": "{{ farm_place.get('name', '') }}"
     }
   ],
   "cs_survey_personnel": [
@@ -48,24 +62,8 @@
   "cs_cropsown_location": [
     {
       "locality": "{{ place.get('name', '') }}",
-      "latitude": "{{ geo.get('latitude', '') }}",
-      "longitude": "{{ geo.get('longitude', '') }}"
-    }
-  ],
-  "cs_land_details": [
-    {
-      "record_name": "{{ land_id }}",
-      "land_uuid": "{{ land_uuid }}",
-      "land_id": "{{ land_id }}",
-      "is_land_registered": {{ "true" if land_id else "false" }},
-      "ownership_type": "{{ (farm.get('land_tenure', '') or '') | upper | replace(' ', '_') }}",
-      "soil_fertility_type": "{{ (farm.get('soil_fertility', '') or '') | upper }}",
-      "plot_category": "{{ (farm.get('plot_category', '') or '') | upper | replace(' ', '_') }}",
-      "land_area": "{{ farm.get('area', '') }}",
-      "unit": "HECTARE",
-      "sub_kebele": "{{ farm_place.get('name', '') }}",
-      "latitude": "{{ farm_geo.get('latitude', '') }}",
-      "longitude": "{{ farm_geo.get('longitude', '') }}"
+      "latitude": "{{ farm_geo.get('latitude', '') or geo.get('latitude', '') }}",
+      "longitude": "{{ farm_geo.get('longitude', '') or geo.get('longitude', '') }}"
     }
   ],
   "cs_planning_details": [

@@ -70,8 +70,6 @@ registry:
         idTypes:
           cropsown:
             idLength: 12
-          land:
-            idLength: 12
           cluster:
             idLength: 10
 

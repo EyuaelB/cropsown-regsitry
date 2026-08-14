@@ -17,7 +17,6 @@ is the hub, and all seven crop lines link straight to it.
 | Mnemonic | Parent | Table | ERD entity |
 |---|---|---|---|
 | `CropSown` | — (root) | `g2p_register_crop_sowns` | `CROP_SOWN_RECORDS` |
-| `Land` | — (root) | `g2p_register_lands` | `REGISTER_LAND` |
 | `Planning` | CropSown | `g2p_register_plannings` | `CROP_PLANNING_LINES` |
 | `Cultivation` | CropSown | `g2p_register_cultivations` | `CROP_CULTIVATION_LINES` |
 | `Sowing` | CropSown | `g2p_register_sowings` | `CROP_SOWING_LINES` |
@@ -35,14 +34,19 @@ so those live on the crop sown record itself: `farmer_uuid`, `farmer_id`,
 into the platform's `link_foundational_id`, the column that exists for "this
 record belongs to a person held elsewhere".
 
-### Two identifiers for a land
+### The land is described, not registered
 
-`Land` is its own root register, referenced rather than nested — the ERD draws it
-standing apart from the crop sown record, which points at it.
+Land is **not** a register. A crop sown record covers exactly one plot, so the
+ERD's `REGISTER_LAND` attributes sit flat on `CROP_SOWN_RECORDS` — including its
+geometry, via the geo and geo-shape mixins — and are edited through the `Land`
+tab's `cs_land_details` section, which writes to the crop sown record like every
+other section on it.
 
-* **`land_uuid`** is generated (`uuid4`) when a land is created and never typed.
-  It is the stable key the crop sown record and every crop line reference, so a
-  land can be renumbered without breaking anything pointing at it.
+Two identifiers survive the move:
+
+* **`land_uuid`** is generated (`uuid4`) on the crop sown record and never typed.
+  It stays the stable key every crop line references, so a plot can be renumbered
+  without breaking anything pointing at it.
 * **`land_id`** is the human identifier an operator reads off a certificate,
   e.g. `OR/01/02/003/00001`. It is what dedup and `record_name` use.
 

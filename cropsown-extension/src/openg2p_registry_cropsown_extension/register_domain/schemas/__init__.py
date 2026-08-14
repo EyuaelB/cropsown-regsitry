@@ -1,5 +1,4 @@
 from .crop_sown import G2PRegisterSchemaCropSown, G2PRegisterHistorySchemaCropSown, G2PIntakeFormSchemaCropSown
-from .land import G2PRegisterSchemaLand, G2PRegisterHistorySchemaLand, G2PIntakeFormSchemaLand
 from .planning import G2PRegisterSchemaPlanning, G2PRegisterHistorySchemaPlanning, G2PIntakeFormSchemaPlanning
 from .cultivation import G2PRegisterSchemaCultivation, G2PRegisterHistorySchemaCultivation, G2PIntakeFormSchemaCultivation
 from .sowing import G2PRegisterSchemaSowing, G2PRegisterHistorySchemaSowing, G2PIntakeFormSchemaSowing

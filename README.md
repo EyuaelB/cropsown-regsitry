@@ -24,11 +24,13 @@ register model.
 ## Registers
 
 Modelled on the **CROP SOWN REGISTRY ERD UPDATED** diagram. The crop sown record
-is the hub: every crop line links directly to it, with the land referenced by
-`land_uuid` rather than nested.
+is the hub: every crop line links directly to it. Land is not a register of its
+own — a crop sown record covers exactly one plot, whose attributes and geometry
+sit flat on the record.
 
 ```
-CropSown                     farmer identifiers, land reference, status, production year, lifecycle stage
+CropSown                     farmer identifiers, the plot (land_uuid/land_id, ownership, soil fertility,
+                             area, geo), status, production year, lifecycle stage
 ├── Planning                 season, crop, planned area/seed/fertilizer, expected yield
 ├── Cultivation              land preparation, actual planted date/area/seed/fertilizer
 ├── Sowing                   sowing status, area sown, sowing date, seed type, machinery
@@ -36,10 +38,11 @@ CropSown                     farmer identifiers, land reference, status, product
 ├── Harvest                  maturity, harvest date, area/quantity harvested, loss, stored, sold
 ├── Infestation              growth stage, pest/weed/disease, severity, damage, action taken
 └── Cluster                  cluster name/status, agro-ecological zone, area, smallholders
-
-Land                         land_uuid (generated) + land_id (human), ownership, soil fertility, area, geo
-                             referenced by the crop sown record and by every crop line
 ```
+
+Neither land nor farmers are registers here. The plot's `land_uuid` (generated)
+stays the key every crop line references, but it now names the plot described by
+its parent crop sown record rather than a row in a separate land register.
 
 Farmers are **not** a register here: the crop sown record carries their
 identifiers (`farmer_uuid`, `farmer_id`, `fayda_fan_id`, `farmer_name`) and

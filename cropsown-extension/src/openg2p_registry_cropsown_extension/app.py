@@ -11,7 +11,6 @@ from openg2p_registry_core.app import Initializer as CoreInitializer
 
 from .register_domain.models import (
     G2PRegisterCropSown, G2PRegisterHistoryCropSown,
-    G2PRegisterLand, G2PRegisterHistoryLand,
     G2PRegisterPlanning, G2PRegisterHistoryPlanning,
     G2PRegisterCultivation, G2PRegisterHistoryCultivation,
     G2PRegisterSowing, G2PRegisterHistorySowing,
@@ -19,14 +18,14 @@ from .register_domain.models import (
     G2PRegisterHarvest, G2PRegisterHistoryHarvest,
     G2PRegisterInfestation, G2PRegisterHistoryInfestation,
     G2PRegisterCluster, G2PRegisterHistoryCluster,
-    G2PIntakeFormCropSown, G2PIntakeFormLand,
+    G2PIntakeFormCropSown,
     G2PIntakeFormPlanning, G2PIntakeFormCultivation, G2PIntakeFormSowing,
     G2PIntakeFormProduction, G2PIntakeFormHarvest, G2PIntakeFormInfestation,
     G2PIntakeFormCluster,
 )
 from .register_domain.factory import G2PRegisterDomainFactory
 from .register_domain.services import (
-    G2PRegisterDomainServiceCropSown, G2PRegisterDomainServiceLand,
+    G2PRegisterDomainServiceCropSown,
     G2PRegisterDomainServiceSowing,
 )
 
@@ -40,7 +39,6 @@ class Initializer(BaseInitializer):
 
         G2PRegisterDomainFactory()
         G2PRegisterDomainServiceCropSown()
-        G2PRegisterDomainServiceLand()
         G2PRegisterDomainServiceSowing()
 
     def migrate_database(self, args):
@@ -48,11 +46,9 @@ class Initializer(BaseInitializer):
         async def migrate():
             _logger.info("Migrating extensions database")
 
-            # Land first: the crop sown record references it by land_uuid.
-            await G2PRegisterLand.create_migrate()
-            await G2PRegisterHistoryLand.create_migrate()
-            await G2PIntakeFormLand.create_migrate()
-
+            # The crop sown record is the root: it carries the land attributes
+            # flat (land is not a register of its own) and every crop line hangs
+            # off it.
             await G2PRegisterCropSown.create_migrate()
             await G2PRegisterHistoryCropSown.create_migrate()
             await G2PIntakeFormCropSown.create_migrate()

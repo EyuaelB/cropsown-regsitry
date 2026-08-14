@@ -13,4 +13,10 @@ FROM openg2p/openg2p-registry-partner-api:${RP_VERSION}
 ENV REGISTRY_EXTENSION_MODULE=openg2p_registry_cropsown_extension
 
 COPY cropsown-extension/ /app/cropsown-extension/
-RUN pip install --no-cache-dir /app/cropsown-extension
+# Build-only escape hatch for networks that intercept TLS (corporate proxy, AV,
+# some WSL setups): pip then sees a self-signed root CA and cannot verify
+# pypi.org. Empty by default, so CI and Helm builds are unchanged. Locally:
+#   PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org" docker compose build
+# The scoped assignment keeps it out of the runtime image.
+ARG PIP_TRUSTED_HOST=
+RUN PIP_TRUSTED_HOST="${PIP_TRUSTED_HOST}" pip install --no-cache-dir /app/cropsown-extension

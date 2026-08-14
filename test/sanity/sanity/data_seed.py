@@ -53,7 +53,7 @@ _CREATED_AT = "2026-01-01 00:00:00"
 
 def _row():
     f = fixtures.FARMER
-    record_name = f"{f['farmer_name']} {f['production_year']}"
+    record_name = f["farmer_name"]
     # The marker must be inside search_text — that is the only column the DCI
     # search matches on.
     search_text = " ".join([
