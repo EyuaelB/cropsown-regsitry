@@ -30,6 +30,7 @@ class G2PRegisterDomainServiceInfestation(G2PRegisterDomainService):
         keys = [
             "functional_record_id",
             "land_uuid",
+            "land_id",
             "commodity",
             "growth_stage",
             "infestation_type",

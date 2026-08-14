@@ -32,6 +32,13 @@ class G2PSchemaCropSown:
     unit: Optional[LandSizeUnitEnum] = None
     sub_kebele: Optional[str] = None
 
+    # Address — admin hierarchy from the master-data catalog
+    region: Optional[str] = None
+    zone: Optional[str] = None
+    woreda: Optional[str] = None
+    kebele: Optional[str] = None
+    gps_coordinate: Optional[str] = None
+
     # Record lifecycle & field staff
     status: Optional[str] = None
     production_year: Optional[str] = None

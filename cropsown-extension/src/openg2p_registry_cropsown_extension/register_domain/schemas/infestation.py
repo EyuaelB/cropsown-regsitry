@@ -12,6 +12,7 @@ from ..models.enums import GrowthStageEnum, SeverityLevelEnum
 class G2PSchemaInfestation:
 
     land_uuid: Optional[str] = None
+    land_id: Optional[str] = None
     commodity: Optional[str] = None
     growth_stage: Optional[GrowthStageEnum] = None
     infestation_type: Optional[str] = None

@@ -54,6 +54,13 @@ class G2PCropSown:
     unit: Mapped[LandSizeUnitEnum] = mapped_column(String, nullable=True)     # LandSizeUnitEnum
     sub_kebele: Mapped[str] = mapped_column(String, nullable=True)
 
+    # ── Address: the admin hierarchy, from the master-data catalog ────────────
+    region: Mapped[str] = mapped_column(String, nullable=True)                # Attribute lookup (REGION)
+    zone: Mapped[str] = mapped_column(String, nullable=True)                  # Attribute lookup (ZONE)
+    woreda: Mapped[str] = mapped_column(String, nullable=True)                # Attribute lookup (WOREDA)
+    kebele: Mapped[str] = mapped_column(String, nullable=True)                # Attribute lookup (KEBELE)
+    gps_coordinate: Mapped[str] = mapped_column(String, nullable=True)
+
     # ── Record lifecycle & field staff ────────────────────────────────────────
     status: Mapped[str] = mapped_column(String, nullable=True)                # Attribute lookup (APPROVAL_STATUS)
     production_year: Mapped[str] = mapped_column(String, nullable=True)

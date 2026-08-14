@@ -12,6 +12,7 @@ from ..models.enums import CroppingSystemEnum, SeedClassEnum, SeedSourceEnum
 class G2PSchemaCultivation:
 
     land_uuid: Optional[str] = None
+    land_id: Optional[str] = None
     season: Optional[str] = None
     commodity: Optional[str] = None
     crop_variety: Optional[str] = None

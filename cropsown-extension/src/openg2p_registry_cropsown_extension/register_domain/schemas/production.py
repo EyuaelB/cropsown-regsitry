@@ -11,6 +11,7 @@ from ..models.enums import GrowthStageEnum
 class G2PSchemaProduction:
 
     land_uuid: Optional[str] = None
+    land_id: Optional[str] = None
     season: Optional[str] = None
     commodity: Optional[str] = None
     crop_variety: Optional[str] = None

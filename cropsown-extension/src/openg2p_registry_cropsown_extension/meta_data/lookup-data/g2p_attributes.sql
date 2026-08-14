@@ -16,4 +16,8 @@ INSERT INTO "public"."g2p_attributes" ("attribute_id","attribute_code","attribut
 ('PEST','PEST','Pest','FALSE'),
 ('WEED','WEED','Weed','FALSE'),
 ('CROP_DISEASE','CROP_DISEASE','Crop Disease','FALSE'),
-('AGRO_CHEMICAL','AGRO_CHEMICAL','Agro Chemical','FALSE');
+('AGRO_CHEMICAL','AGRO_CHEMICAL','Agro Chemical','FALSE'),
+('REGION','REGION','Region','TRUE'),
+('ZONE','ZONE','Zone','TRUE'),
+('WOREDA','WOREDA','Woreda','TRUE'),
+('KEBELE','KEBELE','Kebele','TRUE');

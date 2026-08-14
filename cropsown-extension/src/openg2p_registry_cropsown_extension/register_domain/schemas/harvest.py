@@ -12,6 +12,7 @@ from ..models.enums import CropMaturityStatusEnum
 class G2PSchemaHarvest:
 
     land_uuid: Optional[str] = None
+    land_id: Optional[str] = None
     commodity: Optional[str] = None
     crop_maturity_status: Optional[CropMaturityStatusEnum] = None
     harvest_date: Optional[date] = None
