@@ -1,8 +1,9 @@
 """Crop Planning lines — a child of CROP_SOWN_RECORDS.
 
 The ERD links every crop line straight to the crop sown record, so this register
-sits directly under CropSown with no intermediate land/sowing level; the land it
-applies to is named by `land_uuid`.
+sits directly under CropSown with no intermediate land/sowing level; the plot it
+applies to is named by `land_uuid` (the stable generated key, not shown in
+the UI) and carries the operator-facing `land_id` alongside it.
 """
 
 from openg2p_registry_core.models.g2p_intake_form import G2PIntakeForm
@@ -17,6 +18,7 @@ from .enums import CroppingSystemEnum, SeedClassEnum, SeedSourceEnum
 class G2PPlanning:
 
     land_uuid: Mapped[str] = mapped_column(String, nullable=True)
+    land_id: Mapped[str] = mapped_column(String, nullable=True)
     season: Mapped[str] = mapped_column(String, nullable=True)                # Attribute lookup (CROP_SEASON)
     commodity: Mapped[str] = mapped_column(String, nullable=True)             # Attribute lookup (CROP_COMMODITY)
     crop_variety: Mapped[str] = mapped_column(String, nullable=True)          # Attribute lookup (CROP_VARIETY)

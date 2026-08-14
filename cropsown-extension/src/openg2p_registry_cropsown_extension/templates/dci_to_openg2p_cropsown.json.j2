@@ -70,6 +70,7 @@
 {% for crop in crops %}
     {
       "land_uuid": "{{ crop.get('land_identifier', land_uuid) }}",
+      "land_id": "{{ land_id }}",
       "season": "{{ (crop.get('season', '') or '') | upper }}",
       "commodity": "{{ crop.get('crop_type', '') }}",
       "crop_variety": "{{ crop.get('variety', '') }}",
@@ -83,6 +84,7 @@
 {% for crop in crops %}
     {
       "land_uuid": "{{ crop.get('land_identifier', land_uuid) }}",
+      "land_id": "{{ land_id }}",
       "season": "{{ (crop.get('season', '') or '') | upper }}",
       "commodity": "{{ crop.get('crop_type', '') }}",
       "crop_variety": "{{ crop.get('variety', '') }}",
@@ -95,6 +97,7 @@
 {% for crop in crops %}
     {
       "land_uuid": "{{ crop.get('land_identifier', land_uuid) }}",
+      "land_id": "{{ land_id }}",
       "season": "{{ (crop.get('season', '') or '') | upper }}",
       "commodity": "{{ crop.get('crop_type', '') }}",
       "crop_variety": "{{ crop.get('variety', '') }}",
@@ -111,6 +114,7 @@
 {% for crop in crops %}
     {
       "land_uuid": "{{ crop.get('land_identifier', land_uuid) }}",
+      "land_id": "{{ land_id }}",
       "season": "{{ (crop.get('season', '') or '') | upper }}",
       "commodity": "{{ crop.get('crop_type', '') }}",
       "growth_stage": "{{ (crop.get('growth_stage', '') or '') | upper }}",
@@ -128,6 +132,7 @@
     {% if not harvest_rows.first %},{% endif %}
     {
       "land_uuid": "{{ crop.get('land_identifier', land_uuid) }}",
+      "land_id": "{{ land_id }}",
       "commodity": "{{ crop.get('crop_type', '') }}",
       "crop_maturity_status": "HARVESTED",
       "harvest_date": "{{ (crop.get('harvest_date', '') or '').split('T')[0] }}",

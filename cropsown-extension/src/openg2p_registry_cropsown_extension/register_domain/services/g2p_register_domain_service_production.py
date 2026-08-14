@@ -30,6 +30,7 @@ class G2PRegisterDomainServiceProduction(G2PRegisterDomainService):
         keys = [
             "functional_record_id",
             "land_uuid",
+            "land_id",
             "season",
             "commodity",
             "crop_variety",

@@ -48,6 +48,7 @@ class G2PRegisterDomainServiceHarvest(G2PRegisterDomainService):
         keys = [
             "functional_record_id",
             "land_uuid",
+            "land_id",
             "commodity",
             "crop_maturity_status",
             "harvest_date",
