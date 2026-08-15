@@ -67,11 +67,17 @@ registry:
   idgenerator:
     idGenerator:
       appConfig:
+        # padding 5, matching the ATI ir.sequence definitions
+        # (CROP/REG/2026/00012).
         idTypes:
           cropsown:
-            idLength: 12
+            idLength: 5
+          production:
+            idLength: 5
           cluster:
-            idLength: 10
+            idLength: 5
+          infestation:
+            idLength: 5
 
   # staffUi and beneApi are consumed as-is from the openg2p-registry base images
   # (subchart defaults already point at openg2p/openg2p-registry-*), so they are
