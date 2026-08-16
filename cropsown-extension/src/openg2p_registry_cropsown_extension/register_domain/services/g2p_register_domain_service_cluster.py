@@ -2,6 +2,8 @@ import logging
 
 from openg2p_registry_core.services import G2PRegisterDomainService
 
+from .domain_compute_utils import compute_cluster_area, compute_season_parts
+
 from .domain_validation_utils import as_float, as_int, validation_error
 
 _logger = logging.getLogger("g2p-register-domain-service")
@@ -10,6 +12,8 @@ _logger = logging.getLogger("g2p-register-domain-service")
 class G2PRegisterDomainServiceCluster(G2PRegisterDomainService):
     async def validate_domain_attributes(self, records: list[dict]):
         for record in records:
+            compute_season_parts(record)
+            compute_cluster_area(record)
             self._validate_cluster_area(record)
             self._validate_smallholders(record)
             self._validate_collected_land(record)

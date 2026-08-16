@@ -11,8 +11,28 @@ from ..models.enums import CroppingSystemEnum, SeedClassEnum, SeedSourceEnum
 
 class G2PSchemaCultivation:
 
+    is_plot_not_registered: Optional[bool] = None
+    temporary_land_id: Optional[str] = None
+    sync_id: Optional[str] = None
+    start_gc: Optional[date] = None
+    start_month: Optional[int] = None
+    start_day: Optional[int] = None
+    end_gc: Optional[date] = None
+    end_month: Optional[int] = None
+    end_day: Optional[int] = None
+    actual_planted_date_ec: Optional[str] = None
+    actual_fertilizer_sack: Optional[float] = None
+    has_cluster_farming: Optional[bool] = None
+    is_crop_changed: Optional[bool] = None
     land_uuid: Optional[str] = None
     land_id: Optional[str] = None
+    is_land_registered: Optional[bool] = None
+    ownership_type: Optional[str] = None
+    soil_fertility_type: Optional[str] = None
+    plot_category: Optional[str] = None
+    land_area: Optional[float] = None
+    unit: Optional[str] = None
+    sub_kebele: Optional[str] = None
     season: Optional[str] = None
     commodity: Optional[str] = None
     crop_variety: Optional[str] = None
@@ -25,6 +45,7 @@ class G2PSchemaCultivation:
     actual_growth_duration_days: Optional[int] = None
     actual_seed_class: Optional[SeedClassEnum] = None
     actual_seed_source: Optional[SeedSourceEnum] = None
+    seed_variety: Optional[str] = None
     actual_seed_qty: Optional[float] = None
     actual_fertilizer_type: Optional[str] = None
     actual_fertilizer_qty: Optional[float] = None

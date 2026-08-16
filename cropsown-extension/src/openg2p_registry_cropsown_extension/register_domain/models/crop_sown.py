@@ -9,27 +9,22 @@ record for farmers, so the record carries their identifiers — and mirrors the
 Fayda FAN into the platform's `link_foundational_id`, which exists for exactly
 this "belongs to a person held elsewhere" case.
 
-The land is **described here, not registered separately**. Land is not a
-register of its own: a crop sown record covers exactly one plot, and that
-plot's attributes (and its geometry, via the geo/geo-shape mixins) sit flat on
-this record. `land_uuid` is generated here and never typed — it stays the
-stable key every crop line references, but it now names a plot described by
-this record rather than a row in a separate land register. `land_id` is the
-human one an operator reads off a certificate (e.g. OR/01/02/003/00001).
+The land is **not** held here. Matching the Odoo registry, one record can span
+several plots, so each crop line carries the plot it was worked on — `land_id`
+and its attributes live on the line, not the header. What the header holds is
+where the farmer is: the administrative address (region / zone / woreda /
+kebele) and a GPS reading.
 """
-
-import uuid
 
 from openg2p_registry_core.models.g2p_intake_form import G2PIntakeForm
 from openg2p_registry_core.models import (
-    G2PRegister, G2PRegisterHistory, G2PGeo, G2PGeoShape,
-    G2PGeoHistory, G2PGeoShapeHistory
+    G2PRegister, G2PRegisterHistory, G2PGeo, G2PGeoHistory
 )
-from sqlalchemy import Boolean, Numeric, String
+from sqlalchemy import Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..services import G2PRegisterDomainServiceCropSown
-from .enums import LandSizeUnitEnum, LifecycleStageEnum
+from .enums import EditStateEnum, LifecycleStageEnum, RejectedAtStageEnum, StageStateEnum
 
 
 class G2PCropSown:
@@ -41,30 +36,40 @@ class G2PCropSown:
     farmer_name: Mapped[str] = mapped_column(String, nullable=True)
     farmer_odk_ack_id: Mapped[str] = mapped_column(String, nullable=True)
 
-    # ── Land (flat: the plot this record covers, not a register of its own) ───
-    land_uuid: Mapped[str] = mapped_column(
-        String, nullable=True, index=True, default=lambda: str(uuid.uuid4())
-    )
-    land_id: Mapped[str] = mapped_column(String, nullable=True)
-    is_land_registered: Mapped[bool] = mapped_column(Boolean, nullable=True)
-    ownership_type: Mapped[str] = mapped_column(String, nullable=True)        # Attribute lookup (OWNERSHIP_TYPE)
-    soil_fertility_type: Mapped[str] = mapped_column(String, nullable=True)   # Attribute lookup (SOIL_FERTILITY)
-    plot_category: Mapped[str] = mapped_column(String, nullable=True)         # Attribute lookup (PLOT_CATEGORY)
-    land_area: Mapped[float] = mapped_column(Numeric, nullable=True)
-    unit: Mapped[LandSizeUnitEnum] = mapped_column(String, nullable=True)     # LandSizeUnitEnum
-    sub_kebele: Mapped[str] = mapped_column(String, nullable=True)
-
     # ── Address: the admin hierarchy, from the master-data catalog ────────────
     region: Mapped[str] = mapped_column(String, nullable=True)                # Attribute lookup (REGION)
     zone: Mapped[str] = mapped_column(String, nullable=True)                  # Attribute lookup (ZONE)
     woreda: Mapped[str] = mapped_column(String, nullable=True)                # Attribute lookup (WOREDA)
     kebele: Mapped[str] = mapped_column(String, nullable=True)                # Attribute lookup (KEBELE)
     gps_coordinate: Mapped[str] = mapped_column(String, nullable=True)
+    # Denormalised admin names. The register search returns stored values as-is —
+    # it does not join g2p_attribute_values — so a tree column bound to `region`
+    # would print REGION_ET11. These carry the display name for those columns and
+    # are refreshed from the lookup whenever the record is approved.
+    region_name: Mapped[str] = mapped_column(String, nullable=True)
+    zone_name: Mapped[str] = mapped_column(String, nullable=True)
+    woreda_name: Mapped[str] = mapped_column(String, nullable=True)
+    kebele_name: Mapped[str] = mapped_column(String, nullable=True)
+    # The geo-hierarchy widget stores the root->leaf chain it selected here; the
+    # individual level columns above are filled from it on approval.
+    address_hierarchy: Mapped[str] = mapped_column(Text, nullable=True)
 
     # ── Record lifecycle & field staff ────────────────────────────────────────
     status: Mapped[str] = mapped_column(String, nullable=True)                # Attribute lookup (APPROVAL_STATUS)
     production_year: Mapped[str] = mapped_column(String, nullable=True)
     lifecycle_stage: Mapped[LifecycleStageEnum] = mapped_column(String, nullable=True)  # LifecycleStageEnum
+
+    # ── Per-stage approval state, as the Odoo registry tracks it ─────────────
+    planning_state: Mapped[StageStateEnum] = mapped_column(String, nullable=True)
+    cultivation_state: Mapped[StageStateEnum] = mapped_column(String, nullable=True)
+    sowing_state: Mapped[StageStateEnum] = mapped_column(String, nullable=True)
+    harvesting_state: Mapped[StageStateEnum] = mapped_column(String, nullable=True)
+
+    # ── Rejection tracking and edit locking ─────────────────────────────────
+    rejection_reason: Mapped[str] = mapped_column(Text, nullable=True)
+    rejected_at_stage: Mapped[RejectedAtStageEnum] = mapped_column(String, nullable=True)
+    edit_state: Mapped[EditStateEnum] = mapped_column(String, nullable=True)
+    edit_count: Mapped[int] = mapped_column(Integer, nullable=True)
     surveyor_name: Mapped[str] = mapped_column(String, nullable=True)
     surveyor_mobile_number: Mapped[str] = mapped_column(String, nullable=True)
     supervisor_name: Mapped[str] = mapped_column(String, nullable=True)
@@ -72,7 +77,7 @@ class G2PCropSown:
 
 
 # All Register classes should have the prefix G2PRegister
-class G2PRegisterCropSown(G2PRegister, G2PGeo, G2PGeoShape, G2PCropSown):
+class G2PRegisterCropSown(G2PRegister, G2PGeo, G2PCropSown):
     __tablename__ = "g2p_register_crop_sowns"
 
     def get_search_text_fields(self) -> str:
@@ -85,12 +90,12 @@ class G2PRegisterCropSown(G2PRegister, G2PGeo, G2PGeoShape, G2PCropSown):
 
 
 # All Register History classes should have the prefix G2PRegisterHistory
-class G2PRegisterHistoryCropSown(G2PRegisterHistory, G2PGeoHistory, G2PGeoShapeHistory, G2PCropSown):
+class G2PRegisterHistoryCropSown(G2PRegisterHistory, G2PGeoHistory, G2PCropSown):
     __tablename__ = "g2p_register_history_crop_sowns"
 
 
 # All Intake Form classes should have the prefix G2PIntakeForm
-class G2PIntakeFormCropSown(G2PIntakeForm, G2PRegister, G2PGeo, G2PGeoShape, G2PCropSown):
+class G2PIntakeFormCropSown(G2PIntakeForm, G2PRegister, G2PGeo, G2PCropSown):
     __tablename__ = "g2p_intake_form_crop_sowns"
 
     def get_search_text_fields(self) -> str:

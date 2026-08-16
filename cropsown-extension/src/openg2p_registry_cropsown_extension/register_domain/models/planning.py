@@ -6,9 +6,11 @@ applies to is named by `land_uuid` (the stable generated key, not shown in
 the UI) and carries the operator-facing `land_id` alongside it.
 """
 
+from datetime import date
+
 from openg2p_registry_core.models.g2p_intake_form import G2PIntakeForm
 from openg2p_registry_core.models import G2PRegister, G2PRegisterHistory
-from sqlalchemy import Date, Integer, Numeric, String, select
+from sqlalchemy import Boolean, Date, Integer, Numeric, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..services import G2PRegisterDomainServicePlanning
@@ -18,7 +20,16 @@ from .enums import CroppingSystemEnum, SeedClassEnum, SeedSourceEnum
 class G2PPlanning:
 
     land_uuid: Mapped[str] = mapped_column(String, nullable=True)
+    # ── Plot: each line records the land it was worked on (Gen1 puts
+    # land_info_id and its attributes on the line, not the header) ───────────
     land_id: Mapped[str] = mapped_column(String, nullable=True)
+    is_land_registered: Mapped[bool] = mapped_column(Boolean, nullable=True)
+    ownership_type: Mapped[str] = mapped_column(String, nullable=True)        # Attribute lookup (OWNERSHIP_TYPE)
+    soil_fertility_type: Mapped[str] = mapped_column(String, nullable=True)   # Attribute lookup (SOIL_FERTILITY)
+    plot_category: Mapped[str] = mapped_column(String, nullable=True)         # Attribute lookup (PLOT_CATEGORY)
+    land_area: Mapped[float] = mapped_column(Numeric, nullable=True)
+    unit: Mapped[str] = mapped_column(String, nullable=True)                  # LandSizeUnitEnum
+    sub_kebele: Mapped[str] = mapped_column(String, nullable=True)
     season: Mapped[str] = mapped_column(String, nullable=True)                # Attribute lookup (CROP_SEASON)
     commodity: Mapped[str] = mapped_column(String, nullable=True)             # Attribute lookup (CROP_COMMODITY)
     crop_variety: Mapped[str] = mapped_column(String, nullable=True)          # Attribute lookup (CROP_VARIETY)
@@ -33,12 +44,28 @@ class G2PPlanning:
     expected_yield: Mapped[float] = mapped_column(Numeric, nullable=True)
     seed_class: Mapped[SeedClassEnum] = mapped_column(String, nullable=True)  # SeedClassEnum
     seed_source: Mapped[SeedSourceEnum] = mapped_column(String, nullable=True) # SeedSourceEnum
+    seed_variety: Mapped[str] = mapped_column(String, nullable=True)   # Attribute lookup (SEED_VARIETY)
     planned_seed_qty: Mapped[float] = mapped_column(Numeric, nullable=True)
     planned_fertilizer_type: Mapped[str] = mapped_column(String, nullable=True) # Attribute lookup (FERTILIZER_TYPE)
     planned_fertilizer_qty: Mapped[float] = mapped_column(Numeric, nullable=True)
     planned_labor: Mapped[int] = mapped_column(Integer, nullable=True)
     water_source: Mapped[str] = mapped_column(String, nullable=True)          # Attribute lookup (WATER_SOURCE)
     cluster_status: Mapped[str] = mapped_column(String, nullable=True)        # Attribute lookup (CLUSTER_STATUS)
+
+    is_plot_not_registered: Mapped[bool] = mapped_column(Boolean, nullable=True)
+    temporary_land_id: Mapped[str] = mapped_column(String, nullable=True)
+    sync_id: Mapped[str] = mapped_column(String, nullable=True, index=True)
+    # Season window. Gen1 stores the month/day pair alongside the date so a
+    # planted date can be checked against the season regardless of year.
+    start_gc: Mapped[date] = mapped_column(Date, nullable=True)
+    start_month: Mapped[int] = mapped_column(Integer, nullable=True)
+    start_day: Mapped[int] = mapped_column(Integer, nullable=True)
+    end_gc: Mapped[date] = mapped_column(Date, nullable=True)
+    end_month: Mapped[int] = mapped_column(Integer, nullable=True)
+    end_day: Mapped[int] = mapped_column(Integer, nullable=True)
+    planned_date_ec: Mapped[str] = mapped_column(String, nullable=True)
+    planned_fertilizer_sack: Mapped[float] = mapped_column(Numeric, nullable=True)
+    has_cluster_farming: Mapped[bool] = mapped_column(Boolean, nullable=True)
 
 
 # All Register classes should have the prefix G2PRegister

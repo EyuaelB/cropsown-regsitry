@@ -1,7 +1,6 @@
 INSERT INTO "public"."g2p_intake_form_ui_tab_sections" ("tab_section_id","tab_id","section_id","section_order") VALUES 
-('4cb6f0be-e60b-5d1d-801a-07bcc292d321','f3f3a330-98f4-5941-9cec-303e77462b14','cropsown_cropsown_record_section_01',10),
+('4cb6f0be-e60b-5d1d-801a-07bcc292d321','f3f3a330-98f4-5941-9cec-303e77462b14','cropsown_intake_record_section_01',10),
 ('ea5eb31b-9226-5bec-858f-0ba582dc8279','f3f3a330-98f4-5941-9cec-303e77462b14','cropsown_cropsown_location_section_03',20),
-('51553d45-9f93-5de3-a9a1-b604e6756bcf','f3f3a330-98f4-5941-9cec-303e77462b14','cropsown_land_details_section_01',30),
 ('fc16e612-2066-5ff1-b77a-66f5d021ca2e','f3f3a330-98f4-5941-9cec-303e77462b14','cropsown_survey_personnel_section_02',40),
 ('ad93b031-bc62-5a5c-aead-b3471e62a43e','f3f3a330-98f4-5941-9cec-303e77462b14','cropsown_planning_details_section_01',50),
 ('cfb0e8cd-3df9-554e-80e7-7e383ff44475','f3f3a330-98f4-5941-9cec-303e77462b14','cropsown_cluster_details_section_01',60),
