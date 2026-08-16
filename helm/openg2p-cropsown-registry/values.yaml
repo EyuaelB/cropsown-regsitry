@@ -26,29 +26,34 @@ registry:
   # image they extend is pinned by the openg2p-registry dependency version.
   staffApi:
     image:
-      repository: openg2p/openg2p-cropsown-registry-staff-api
-      tag: 0.0.0-develop
+      repository: eyuaelb/cropsown-staff-api
+      tag: 0.1.0
   partnerApi:
     image:
-      repository: openg2p/openg2p-cropsown-registry-partner-api
-      tag: 0.0.0-develop
+      repository: eyuaelb/cropsown-partner-api
+      tag: 0.1.0
   celeryWorker:
     image:
-      repository: openg2p/openg2p-cropsown-registry-celery
-      tag: 0.0.0-develop
+      repository: eyuaelb/cropsown-celery
+      tag: 0.1.0
   celeryBeat:
     image:
-      repository: openg2p/openg2p-cropsown-registry-celery
-      tag: 0.0.0-develop
+      repository: eyuaelb/cropsown-celery
+      tag: 0.1.0
   dbSeed:
     image:
-      repository: openg2p/openg2p-cropsown-registry-db-seed
-      tag: 0.0.0-develop
+      repository: eyuaelb/cropsown-db-seed
+      tag: 0.1.0
     # Geo/images/templates loaders are generic and safe to enable. Sample data is
     # NOT: the platform's load_sample_data.py is hardcoded to the reference
     # (farmer) registry's tables, so it cannot load crop sown records. The crop
     # sown sample set ships as SQL at /seed/sample-data in the db-seed image and
     # is applied explicitly (see local/docker-compose.yml), never by this flag.
+    # The upstream chart defaults the seed's PGDATABASE to `farmer_registry` —
+    # a different registry's database. Left unset, the seed populates that one
+    # and leaves this registry empty, which reads as "duplicate key" errors on
+    # every re-run. Confirm the key name against the subchart's own values
+    # (`helm show values openg2p/openg2p-registry`) and pin it here.
     loadGeoData: true
     loadSampleData: false
     loadImages: true
@@ -79,7 +84,15 @@ registry:
           infestation:
             idLength: 5
 
-  # staffUi and beneApi are consumed as-is from the openg2p-registry base images
+  # The staff portal UI is crop-sown-built too: it carries the branding, the
+  # Dashboard header button and the widget layout fixes, none of which exist in
+  # the base image.
+  staffUi:
+    image:
+      repository: eyuaelb/cropsown-staff-ui
+      tag: 0.1.0
+
+  # beneApi is consumed as-is from the openg2p-registry base image
   # (subchart defaults already point at openg2p/openg2p-registry-*), so they are
   # intentionally not overridden.
 

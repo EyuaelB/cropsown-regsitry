@@ -1,0 +1,90 @@
+# Crop Sown dashboard — read-only analytics over the registry database.
+#
+# The openg2p-cropsown-registry chart has no template for this service, so it is
+# applied on its own:
+#
+#     kubectl apply -n crop -f dashboard-ui.yaml
+#
+# It talks to Postgres directly and only ever issues SELECTs. Point DB_HOST at
+# the same database the staff portal API writes to; on this cluster that is the
+# commons-postgresql service.
+#
+# NEXT_PUBLIC_PORTAL_URL is compiled into the bundle at image build time, so
+# changing it here has no effect on the Back button — it must be passed as a
+# build arg when the image is built.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cropsown-dashboard-db
+  namespace: crop
+type: Opaque
+stringData:
+  # Replace with the registry database's own credentials before applying.
+  DB_USER: postgres
+  DB_PASSWORD: CHANGE_ME
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cropsown-registry-dashboard-ui
+  namespace: crop
+  labels:
+    app.kubernetes.io/name: cropsown-registry-dashboard-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cropsown-registry-dashboard-ui
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cropsown-registry-dashboard-ui
+    spec:
+      containers:
+        - name: dashboard-ui
+          # Pinned by digest: the 0.1.0 tag is reused across builds, and a node
+          # that already cached an older 0.1.0 would not re-pull it.
+          image: eyuaelb/crop-dashboard@sha256:1f12d2a0426708a565310ec7fc91c26a6d0de97c59780270850485f729f72f27
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: DB_HOST
+              value: commons-postgresql
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: registry_db
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef: { name: cropsown-dashboard-db, key: DB_USER }
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: cropsown-dashboard-db, key: DB_PASSWORD }
+          readinessProbe:
+            httpGet: { path: /api/health, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/health, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            # The woreda boundary response is ~32MB and is decompressed in
+            # memory, so the ceiling is well above the idle footprint.
+            limits: { memory: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cropsown-registry-dashboard-ui
+  namespace: crop
+spec:
+  selector:
+    app.kubernetes.io/name: cropsown-registry-dashboard-ui
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

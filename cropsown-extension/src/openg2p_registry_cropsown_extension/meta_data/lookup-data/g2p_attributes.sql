@@ -20,4 +20,8 @@ INSERT INTO "public"."g2p_attributes" ("attribute_id","attribute_code","attribut
 ('REGION','REGION','Region','TRUE'),
 ('ZONE','ZONE','Zone','TRUE'),
 ('WOREDA','WOREDA','Woreda','TRUE'),
-('KEBELE','KEBELE','Kebele','TRUE');
+('KEBELE','KEBELE','Kebele','TRUE')
+ON CONFLICT ("attribute_id") DO UPDATE SET
+    "attribute_code" = EXCLUDED."attribute_code",
+    "attribute_display" = EXCLUDED."attribute_display",
+    "is_hierarchical" = EXCLUDED."is_hierarchical";

@@ -1,0 +1,60 @@
+# Crop sown sample data, as a Job.
+#
+#     kubectl apply -n crop -f db-seed-sample-data.yaml
+#
+# The platform's own sample-data loader only understands the farmer registry's
+# `farmers.json`, so the crop sown set ships as SQL at /seed/sample-data in the
+# db-seed image and is applied here instead. The files are numbered and run in
+# order: records, crop lines, the bulk 500, the season-id rewrite, the images.
+#
+# Safe to re-run: the metadata seeds upsert on their primary key, and the sample
+# files are ordered so a repeat lands on the same rows.
+#
+# Set PGDATABASE to the registry's OWN database. The upstream chart defaults it
+# to `farmer_registry`, which is a different registry — seeding with that value
+# silently populates the wrong database and leaves this one empty.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cropsown-registry-sample-data
+  namespace: crop
+spec:
+  backoffLimit: 0          # fail visibly rather than retrying into confusion
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: sample-data
+          image: eyuaelb/cropsown-db-seed:0.1.0
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -ceu
+            - |
+              # The API's migration builds a trigram index for search, which
+              # needs pg_trgm. Extensions live inside a database, so a freshly
+              # created one has none and the migration fails obliquely with
+              # `operator class "gin_trgm_ops" does not exist`.
+              psql -v ON_ERROR_STOP=1 -q -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'
+
+              for f in /seed/sample-data/*.sql; do
+                echo "-> $f"
+                psql -v ON_ERROR_STOP=1 -q -f "$f"
+              done
+              echo "sample data loaded"
+          env:
+            - name: PGHOST
+              value: commons-postgresql
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              value: cropsown_registry
+            # Superuser: CREATE EXTENSION needs it, and the seed writes across
+            # every table regardless of owner.
+            - name: PGUSER
+              value: postgres
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: commons-postgresql
+                  key: postgres-password

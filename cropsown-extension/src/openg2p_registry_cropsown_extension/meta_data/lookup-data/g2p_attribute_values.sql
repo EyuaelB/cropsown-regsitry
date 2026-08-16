@@ -298,4 +298,10 @@ INSERT INTO "public"."g2p_attribute_values" ("value_id","attribute_id","value_co
 ('AGRO_CHEMICAL_WEEDICIDE_SIMAZINE','AGRO_CHEMICAL','WEEDICIDE_SIMAZINE','Simazine',NULL,132),
 ('AGRO_CHEMICAL_WEEDICIDE_ISOXAFLUTOLE','AGRO_CHEMICAL','WEEDICIDE_ISOXAFLUTOLE','Isoxaflutole',NULL,133),
 ('AGRO_CHEMICAL_WEEDICIDE_FLUMETSULAM','AGRO_CHEMICAL','WEEDICIDE_FLUMETSULAM','Flumetsulam',NULL,134),
-('AGRO_CHEMICAL_WEEDICIDE_CLOMAZONE','AGRO_CHEMICAL','WEEDICIDE_CLOMAZONE','Clomazone',NULL,135);
+('AGRO_CHEMICAL_WEEDICIDE_CLOMAZONE','AGRO_CHEMICAL','WEEDICIDE_CLOMAZONE','Clomazone',NULL,135)
+ON CONFLICT ("value_id") DO UPDATE SET
+    "attribute_id" = EXCLUDED."attribute_id",
+    "value_code" = EXCLUDED."value_code",
+    "value_display" = EXCLUDED."value_display",
+    "parent_value_id" = EXCLUDED."parent_value_id",
+    "sort_order" = EXCLUDED."sort_order";

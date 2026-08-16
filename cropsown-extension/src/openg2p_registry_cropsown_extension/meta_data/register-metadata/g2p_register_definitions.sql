@@ -6,4 +6,23 @@ INSERT INTO "public"."g2p_register_definitions" ("register_id","register_mnemoni
 ('b9beb11f-45a7-5ad0-adde-eace5e1b6b27','Production','Crop Production Lines','Crop Production Register','6b06a95a-9a6c-5a33-a33d-c1625716c59c',50,'FALSE','TABLE',NULL,NULL,NULL,'FALSE','FALSE',0,'FALSE','FALSE','FALSE',730,30),
 ('c40d0a7c-9f31-5c89-9743-e83d6d6c7683','Harvest','Crop Harvesting Lines','Harvest Register','6b06a95a-9a6c-5a33-a33d-c1625716c59c',60,'FALSE','TABLE',NULL,NULL,NULL,'FALSE','FALSE',0,'FALSE','FALSE','FALSE',730,30),
 ('c9ee1d48-93b5-52d5-a8fc-280266a39c10','Cultivation','Crop Cultivation Lines','Cultivation / Land Preparation Register','6b06a95a-9a6c-5a33-a33d-c1625716c59c',30,'FALSE','TABLE',NULL,NULL,NULL,'FALSE','FALSE',0,'FALSE','FALSE','FALSE',730,30),
-('ee41a5f0-a5b6-5a9c-a853-f5c728e4d4b2','Sowing','Crop Sowing Lines','Sowing Register','6b06a95a-9a6c-5a33-a33d-c1625716c59c',40,'FALSE','TABLE',NULL,NULL,NULL,'FALSE','FALSE',0,'FALSE','FALSE','FALSE',730,30);
+('ee41a5f0-a5b6-5a9c-a853-f5c728e4d4b2','Sowing','Crop Sowing Lines','Sowing Register','6b06a95a-9a6c-5a33-a33d-c1625716c59c',40,'FALSE','TABLE',NULL,NULL,NULL,'FALSE','FALSE',0,'FALSE','FALSE','FALSE',730,30)
+ON CONFLICT ("register_id") DO UPDATE SET
+    "register_mnemonic" = EXCLUDED."register_mnemonic",
+    "register_subject" = EXCLUDED."register_subject",
+    "register_description" = EXCLUDED."register_description",
+    "master_register_id" = EXCLUDED."master_register_id",
+    "register_rank" = EXCLUDED."register_rank",
+    "functional_id_generation_required" = EXCLUDED."functional_id_generation_required",
+    "register_purpose" = EXCLUDED."register_purpose",
+    "program_id" = EXCLUDED."program_id",
+    "program_mnemonic" = EXCLUDED."program_mnemonic",
+    "register_icon" = EXCLUDED."register_icon",
+    "has_image" = EXCLUDED."has_image",
+    "dedup_is_enabled" = EXCLUDED."dedup_is_enabled",
+    "dedup_threshold_score" = EXCLUDED."dedup_threshold_score",
+    "completion_score_required" = EXCLUDED."completion_score_required",
+    "outgest_applicable" = EXCLUDED."outgest_applicable",
+    "requires_registrant_authentication" = EXCLUDED."requires_registrant_authentication",
+    "registrant_authentication_validity_days" = EXCLUDED."registrant_authentication_validity_days",
+    "registrant_re_auth_warning_days_before" = EXCLUDED."registrant_re_auth_warning_days_before";
