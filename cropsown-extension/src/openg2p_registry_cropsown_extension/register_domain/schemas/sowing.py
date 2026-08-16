@@ -11,8 +11,20 @@ from ..models.enums import SeedClassEnum, SowingStatusEnum
 
 class G2PSchemaSowing:
 
+    is_plot_not_registered: Optional[bool] = None
+    temporary_land_id: Optional[str] = None
+    sync_id: Optional[str] = None
+    sowing_date_ec: Optional[str] = None
+    geo_tagged_photo_document_id: Optional[str] = None
     land_uuid: Optional[str] = None
     land_id: Optional[str] = None
+    is_land_registered: Optional[bool] = None
+    ownership_type: Optional[str] = None
+    soil_fertility_type: Optional[str] = None
+    plot_category: Optional[str] = None
+    land_area: Optional[float] = None
+    unit: Optional[str] = None
+    sub_kebele: Optional[str] = None
     season: Optional[str] = None
     commodity: Optional[str] = None
     crop_variety: Optional[str] = None
@@ -21,6 +33,7 @@ class G2PSchemaSowing:
     area_sown: Optional[float] = None
     sowing_date: Optional[date] = None
     seed_class: Optional[SeedClassEnum] = None
+    seed_variety: Optional[str] = None
     actual_seed_qty: Optional[float] = None
     fertilizer_type: Optional[str] = None
     fertilizer_qty: Optional[float] = None

@@ -6,9 +6,11 @@ applies to is named by `land_uuid` (the stable generated key, not shown in
 the UI) and carries the operator-facing `land_id` alongside it.
 """
 
+from datetime import date
+
 from openg2p_registry_core.models.g2p_intake_form import G2PIntakeForm
 from openg2p_registry_core.models import G2PRegister, G2PRegisterHistory
-from sqlalchemy import Date, Numeric, String, select
+from sqlalchemy import Boolean, Date, Integer, Numeric, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..services import G2PRegisterDomainServiceInfestation
@@ -18,7 +20,16 @@ from .enums import GrowthStageEnum, SeverityLevelEnum
 class G2PInfestation:
 
     land_uuid: Mapped[str] = mapped_column(String, nullable=True)
+    # ── Plot: each line records the land it was worked on (Gen1 puts
+    # land_info_id and its attributes on the line, not the header) ───────────
     land_id: Mapped[str] = mapped_column(String, nullable=True)
+    is_land_registered: Mapped[bool] = mapped_column(Boolean, nullable=True)
+    ownership_type: Mapped[str] = mapped_column(String, nullable=True)        # Attribute lookup (OWNERSHIP_TYPE)
+    soil_fertility_type: Mapped[str] = mapped_column(String, nullable=True)   # Attribute lookup (SOIL_FERTILITY)
+    plot_category: Mapped[str] = mapped_column(String, nullable=True)         # Attribute lookup (PLOT_CATEGORY)
+    land_area: Mapped[float] = mapped_column(Numeric, nullable=True)
+    unit: Mapped[str] = mapped_column(String, nullable=True)                  # LandSizeUnitEnum
+    sub_kebele: Mapped[str] = mapped_column(String, nullable=True)
     commodity: Mapped[str] = mapped_column(String, nullable=True)             # Attribute lookup (CROP_COMMODITY)
     growth_stage: Mapped[GrowthStageEnum] = mapped_column(String, nullable=True) # GrowthStageEnum
     infestation_type: Mapped[str] = mapped_column(String, nullable=True)      # Attribute lookup (INFESTATION_TYPE)
@@ -31,6 +42,11 @@ class G2PInfestation:
     observation_date: Mapped[str] = mapped_column(Date, nullable=True)
     geo_tagged_photo_document_id: Mapped[str] = mapped_column(String, nullable=True)
     action_taken: Mapped[str] = mapped_column(String, nullable=True)
+
+    is_plot_not_registered: Mapped[bool] = mapped_column(Boolean, nullable=True)
+    temporary_land_id: Mapped[str] = mapped_column(String, nullable=True)
+    sync_id: Mapped[str] = mapped_column(String, nullable=True, index=True)
+    observation_date_ec: Mapped[str] = mapped_column(String, nullable=True)
 
 
 # All Register classes should have the prefix G2PRegister

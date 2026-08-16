@@ -2,8 +2,15 @@ import logging
 import re
 from datetime import date
 
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from openg2p_registry_core.models import G2PRegisterChangeRequest
 from openg2p_registry_core.services import G2PRegisterDomainService
 
+from .domain_lifecycle_utils import (
+    apply_approval, current_stage, mark_pending, stage_for_section,
+)
 from .domain_validation_utils import as_float, as_int, validation_error
 
 _logger = logging.getLogger("g2p-register-domain-service")
@@ -11,36 +18,31 @@ _logger = logging.getLogger("g2p-register-domain-service")
 
 _MOBILE_NUMBER_PATTERN = re.compile(r"^\+?[0-9][0-9\- ]{5,19}$")
 
+# Farmer ids are issued by the farmer registry as FR- followed by ten digits.
+_FARMER_ID_PATTERN = re.compile(r"^FR-[0-9]{10}$")
+
 class G2PRegisterDomainServiceCropSown(G2PRegisterDomainService):
     async def validate_domain_attributes(self, records: list[dict]):
         for record in records:
             self._validate_production_year(record)
             self._validate_mobile_number(record, "surveyor_mobile_number")
             self._validate_mobile_number(record, "supervisor_mobile_number")
-            self._validate_land_area(record)
-        self._validate_no_duplicate_land_id(records)
+            self._validate_farmer_id(record)
 
     def _validate_production_year(self, record: dict) -> None:
         year = as_int(record.get("production_year"))
         if year is not None and year > date.today().year:
             validation_error("production_year must not be in the future")
 
-    def _validate_land_area(self, record: dict) -> None:
-        land_area = as_float(record.get("land_area"))
-        if land_area is not None and land_area <= 0:
-            validation_error("land_area must be greater than zero when provided")
-
-    def _validate_no_duplicate_land_id(self, records: list[dict]) -> None:
-        """land_uuid is generated, so the identifier worth guarding is land_id."""
-        seen: set[str] = set()
-        for record in records:
-            value = record.get("land_id")
-            if value is None or str(value).strip() == "":
-                continue
-            normalized = str(value).strip()
-            if normalized in seen:
-                validation_error("Duplicate land_id entries are not allowed")
-            seen.add(normalized)
+    def _validate_farmer_id(self, record: dict) -> None:
+        """Farmer ids come from the farmer registry as FR- plus ten digits."""
+        value = record.get("farmer_id")
+        if value is None or str(value).strip() == "":
+            return
+        if not _FARMER_ID_PATTERN.match(str(value).strip()):
+            validation_error(
+                f"farmer_id must be FR- followed by 10 digits (got '{value}')"
+            )
 
     def _validate_mobile_number(self, record: dict, field: str) -> None:
         value = record.get(field)
@@ -58,14 +60,6 @@ class G2PRegisterDomainServiceCropSown(G2PRegisterDomainService):
             "farmer_id",
             "fayda_fan_id",
             "farmer_odk_ack_id",
-            "land_uuid",
-            "land_id",
-            "ownership_type",
-            "soil_fertility_type",
-            "plot_category",
-            "land_area",
-            "unit",
-            "sub_kebele",
             "status",
             "production_year",
             "lifecycle_stage",
@@ -81,7 +75,6 @@ class G2PRegisterDomainServiceCropSown(G2PRegisterDomainService):
             "address_line_2",
             "postal_code",
             "country_code",
-            "shape_type",
         ]
         search_text = []
         if extra:
@@ -108,3 +101,155 @@ class G2PRegisterDomainServiceCropSown(G2PRegisterDomainService):
         )
 
         return " ".join(record_name).strip()
+
+    # ── Cross-record rules ──────────────────────────────────────────────────
+    # `validate_domain_attributes` only sees the records being written, so rules
+    # that span a record and its siblings cannot live there. `pre_approve` runs
+    # on approval with a live session, which is the first point both the record
+    # and the database are available — so the Odoo @api.constrains that query
+    # other rows are enforced here.
+
+    async def pre_approve(self, change_request: G2PRegisterChangeRequest, session: AsyncSession):
+        await self._check_unique_farmer_per_year(change_request, session)
+        await self._check_crop_area_within_plot(change_request, session)
+        await self._refresh_admin_names(change_request, session)
+
+    async def _refresh_admin_names(
+        self, change_request: G2PRegisterChangeRequest, session: AsyncSession
+    ) -> None:
+        """Copy the admin unit display names onto the record.
+
+        The register search returns stored values verbatim, so a tree column
+        bound to `region` shows REGION_ET11. These denormalised names give the
+        tree something readable while the coded value stays authoritative.
+        """
+        from openg2p_registry_core.models import G2PAttributeValue
+
+        from ..models import G2PRegisterCropSown
+
+        record = await session.get(G2PRegisterCropSown, change_request.internal_record_id)
+        if record is None:
+            return
+        for field, name_field in (("region", "region_name"), ("zone", "zone_name"),
+                                  ("woreda", "woreda_name"), ("kebele", "kebele_name")):
+            value_id = getattr(record, field, None)
+            if not value_id:
+                setattr(record, name_field, None)
+                continue
+            row = (
+                await session.execute(
+                    select(G2PAttributeValue).where(G2PAttributeValue.value_id == value_id)
+                )
+            ).scalars().first()
+            setattr(record, name_field, getattr(row, "value_display", None) if row else None)
+
+    async def _check_unique_farmer_per_year(
+        self, change_request: G2PRegisterChangeRequest, session: AsyncSession
+    ) -> None:
+        """Odoo: `_check_unique_farmer_id` — one registration per farmer per
+        production year."""
+        from ..models import G2PRegisterCropSown
+
+        record = await session.get(G2PRegisterCropSown, change_request.internal_record_id)
+        if record is None or not record.farmer_id or not record.production_year:
+            return
+
+        clash = (
+            await session.execute(
+                select(func.count())
+                .select_from(G2PRegisterCropSown)
+                .where(
+                    G2PRegisterCropSown.farmer_id == record.farmer_id,
+                    G2PRegisterCropSown.production_year == record.production_year,
+                    G2PRegisterCropSown.internal_record_id != record.internal_record_id,
+                    G2PRegisterCropSown.record_status == "ACTIVE",
+                )
+            )
+        ).scalar_one()
+        if clash:
+            validation_error(
+                f"Farmer {record.farmer_id} already has a crop sown record for "
+                f"{record.production_year}"
+            )
+
+    async def _check_crop_area_within_plot(
+        self, change_request: G2PRegisterChangeRequest, session: AsyncSession
+    ) -> None:
+        """Odoo: `_check_land_area_allocation` / `_check_actual_crop_area_limits`.
+
+        The crop area planned or worked on a plot may not exceed that plot's
+        total area. Each line carries its own land_id and land_area, so the
+        check groups a record's lines by plot and compares the sum against the
+        area declared for it.
+        """
+        from ..models import (
+            G2PRegisterCultivation, G2PRegisterPlanning, G2PRegisterSowing,
+        )
+
+        checks = [
+            (G2PRegisterPlanning, "planned_area", "planned"),
+            (G2PRegisterCultivation, "actual_crop_area", "cultivated"),
+            (G2PRegisterSowing, "area_sown", "sown"),
+        ]
+        for model, area_field, label in checks:
+            rows = (
+                await session.execute(
+                    select(model).where(
+                        model.link_internal_record_id == change_request.internal_record_id,
+                        model.record_status == "ACTIVE",
+                    )
+                )
+            ).scalars().all()
+
+            by_plot: dict[str, list] = {}
+            for row in rows:
+                key = getattr(row, "land_id", None) or getattr(row, "land_uuid", None)
+                if key:
+                    by_plot.setdefault(key, []).append(row)
+
+            for plot, plot_rows in by_plot.items():
+                total = sum(as_float(getattr(r, area_field, None)) or 0.0 for r in plot_rows)
+                plot_area = next(
+                    (as_float(r.land_area) for r in plot_rows if as_float(r.land_area)), None
+                )
+                if plot_area and total > plot_area + 1e-6:
+                    validation_error(
+                        f"Total {label} area on plot {plot} is {total:g} ha, which exceeds "
+                        f"its registered area of {plot_area:g} ha"
+                    )
+
+    # ── Lifecycle ───────────────────────────────────────────────────────────
+    # AWE owns the approval decision; the ladder is ours. `post_approve` runs
+    # once a change request is approved, which is the moment Odoo's
+    # action_approve_wah would have advanced the stage.
+
+    async def post_approve(self, change_request: G2PRegisterChangeRequest, session: AsyncSession):
+        from ..models import G2PRegisterCropSown
+
+        record = await session.get(G2PRegisterCropSown, change_request.internal_record_id)
+        if record is None:
+            return
+
+        section_mnemonic = await self._resolve_section_mnemonic(change_request, session)
+        stage = stage_for_section(section_mnemonic) or current_stage(record)
+        apply_approval(record, stage)
+        _logger.info(
+            "crop sown %s: %s approved, lifecycle now %s",
+            record.internal_record_id, stage, record.lifecycle_stage,
+        )
+
+    async def pre_submit_stage(self, record, section_mnemonic: str) -> None:
+        """Mark the stage pending when its section is submitted for approval."""
+        stage = stage_for_section(section_mnemonic)
+        if stage:
+            mark_pending(record, stage)
+
+    async def _resolve_section_mnemonic(
+        self, change_request: G2PRegisterChangeRequest, session: AsyncSession
+    ) -> str:
+        from openg2p_registry_core.models import G2PRegisterSection
+
+        if not change_request.section_id:
+            return ""
+        section = await session.get(G2PRegisterSection, change_request.section_id)
+        return getattr(section, "section_mnemonic", "") or ""

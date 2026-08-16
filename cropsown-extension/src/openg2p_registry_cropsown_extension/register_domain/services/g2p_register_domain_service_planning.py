@@ -3,6 +3,8 @@ from datetime import date
 
 from openg2p_registry_core.services import G2PRegisterDomainService
 
+from .domain_compute_utils import compute_fertilizer_sacks, compute_season_parts, is_date_in_season
+
 from .domain_validation_utils import as_float, parse_date, validation_error
 
 _logger = logging.getLogger("g2p-register-domain-service")
@@ -11,6 +13,9 @@ _logger = logging.getLogger("g2p-register-domain-service")
 class G2PRegisterDomainServicePlanning(G2PRegisterDomainService):
     async def validate_domain_attributes(self, records: list[dict]):
         for record in records:
+            compute_season_parts(record)
+            compute_fertilizer_sacks(record, "planned_fertilizer_qty", "planned_fertilizer_sack")
+            self._validate_date_in_season(record, "planned_date")
             self._validate_planned_area(record)
             self._validate_planned_date(record)
         self._validate_no_duplicate_commodity_season(records)
@@ -39,6 +44,16 @@ class G2PRegisterDomainServicePlanning(G2PRegisterDomainService):
                     "Duplicate commodity entries for the same season and land are not allowed"
                 )
             seen.add(key)
+
+    def _validate_date_in_season(self, record: dict, field: str) -> None:
+        """Odoo: `_check_season_crop_required` — the date must fall inside the
+        season window carried on the record."""
+        value = parse_date(record.get(field))
+        if value is None:
+            return
+        if not is_date_in_season(value, record.get("start_month"), record.get("start_day"),
+                                 record.get("end_month"), record.get("end_day")):
+            validation_error(f"{field} falls outside the season window on this record")
 
     def construct_search_text(self, payload: dict, extra: list[str] = None) -> str:
         _logger.info("Constructing search text for planning")

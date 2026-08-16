@@ -3,6 +3,8 @@ from datetime import date
 
 from openg2p_registry_core.services import G2PRegisterDomainService
 
+from .domain_compute_utils import compute_harvest_yield
+
 from .domain_validation_utils import as_float, parse_date, validation_error
 
 _logger = logging.getLogger("g2p-register-domain-service")
@@ -11,6 +13,7 @@ _logger = logging.getLogger("g2p-register-domain-service")
 class G2PRegisterDomainServiceHarvest(G2PRegisterDomainService):
     async def validate_domain_attributes(self, records: list[dict]):
         for record in records:
+            compute_harvest_yield(record)
             self._validate_harvest_date(record)
             self._validate_post_harvest_loss(record)
             self._validate_disposal_quantities(record)

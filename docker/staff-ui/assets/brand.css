@@ -1,0 +1,49 @@
+
+/* ── Crop Sown Registry branding overrides ──────────────────────────────────
+   Appended to the portal's compiled stylesheets. The base build sets the page
+   shell to `bg-[url('/images/common/bg_pattern.png')] ... overflow-hidden`,
+   which assumes a small tiling pattern and clips anything past the viewport.
+   Our background is a photograph, so it has to cover rather than repeat, and
+   the shell has to scroll. Both rules use !important because they override
+   Tailwind utilities of equal specificity that may load after this file. */
+.bg-\[url\(\'\/images\/common\/bg_pattern\.png\'\)\] {
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  /* fixed keeps the photo filling the viewport while the content scrolls */
+  background-attachment: fixed !important;
+}
+
+/* The home shell should fill exactly one viewport and not grow into a page
+   scroll. The base build already sets min-h-screen + overflow-hidden; pin the
+   height too so tall content is contained rather than pushing the document
+   taller than the screen. */
+.min-h-screen.overflow-hidden {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+/* ── Page transition ────────────────────────────────────────────────────────
+   Fade content in as each page mounts. Deliberately opacity-only: a transform
+   on an ancestor makes `background-attachment: fixed` resolve against that
+   element instead of the viewport, which would break the background above.
+
+   The portal is a compiled Next.js build, so there is no template component to
+   hook — this rides on the elements being re-created when a route renders. */
+@keyframes cs-page-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.min-h-screen {
+  animation: cs-page-fade-in 320ms ease-out both;
+}
+
+/* Honour the OS setting: no motion, no delayed content. */
+@media (prefers-reduced-motion: reduce) {
+  .min-h-screen {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}

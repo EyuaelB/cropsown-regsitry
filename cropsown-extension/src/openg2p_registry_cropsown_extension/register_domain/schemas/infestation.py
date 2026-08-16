@@ -11,8 +11,19 @@ from ..models.enums import GrowthStageEnum, SeverityLevelEnum
 
 class G2PSchemaInfestation:
 
+    is_plot_not_registered: Optional[bool] = None
+    temporary_land_id: Optional[str] = None
+    sync_id: Optional[str] = None
+    observation_date_ec: Optional[str] = None
     land_uuid: Optional[str] = None
     land_id: Optional[str] = None
+    is_land_registered: Optional[bool] = None
+    ownership_type: Optional[str] = None
+    soil_fertility_type: Optional[str] = None
+    plot_category: Optional[str] = None
+    land_area: Optional[float] = None
+    unit: Optional[str] = None
+    sub_kebele: Optional[str] = None
     commodity: Optional[str] = None
     growth_stage: Optional[GrowthStageEnum] = None
     infestation_type: Optional[str] = None

@@ -2,6 +2,8 @@ import logging
 
 from openg2p_registry_core.services import G2PRegisterDomainService
 
+from .domain_compute_utils import compute_production_results
+
 from .domain_validation_utils import as_float, validation_error
 
 _logger = logging.getLogger("g2p-register-domain-service")
@@ -10,6 +12,7 @@ _logger = logging.getLogger("g2p-register-domain-service")
 class G2PRegisterDomainServiceProduction(G2PRegisterDomainService):
     async def validate_domain_attributes(self, records: list[dict]):
         for record in records:
+            compute_production_results(record)
             self._validate_area_under_production(record)
             self._validate_yields(record)
 
