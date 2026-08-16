@@ -95,6 +95,55 @@ helm install cropsown-registry ./helm/openg2p-cropsown-registry \
 
 Set `registry.sanity.runE2e=true` to run the end-to-end sanity suite after install.
 
+## Redeploy
+
+Build every image, tag them with one version, and push:
+
+```bash
+./scripts/build-images.sh 0.1.0 --push
+```
+
+The script prints each image's digest at the end. Then, on the cluster:
+
+```bash
+# Name the container. `*=` also rewrites init containers, which replaces the
+# postgres-checker (a psql client) with the app image and leaves pods stuck in
+# PodInitializing on `pg_isready: not found`.
+kubectl -n crop set image deploy/cropsown-registry-staff-portal-api      staff-portal-api=eyuaelb/cropsown-staff-api:0.1.0
+kubectl -n crop set image deploy/cropsown-registry-partner-api           partner-api=eyuaelb/cropsown-partner-api:0.1.0
+kubectl -n crop set image deploy/cropsown-registry-celery-worker         celery-worker=eyuaelb/cropsown-celery:0.1.0
+kubectl -n crop set image deploy/cropsown-registry-celery-beat-producer  celery-beat-producer=eyuaelb/cropsown-celery:0.1.0
+kubectl -n crop set image deploy/cropsown-registry-staff-portal-ui       staff-portal-ui=eyuaelb/cropsown-staff-ui:0.1.0
+
+kubectl -n crop rollout restart deploy -l app.kubernetes.io/instance=cropsown-registry
+```
+
+Reusing a tag needs `imagePullPolicy: Always` on the container *and* a restart:
+`kubectl set image` with an unchanged image string is a no-op, and a node that
+already cached that tag will not re-pull it. Pin the digest instead
+(`image@sha256:…`) when you want the swap to be provable.
+
+Then re-seed. The metadata files upsert on their primary key, so this is safe to
+repeat and it *applies* changed metadata rather than skipping it — no database
+drop needed:
+
+```bash
+kubectl -n crop delete job cropsown-registry-sample-data --ignore-not-found
+kubectl -n crop apply -f helm/db-seed-sample-data.yaml
+kubectl -n crop logs -f job/cropsown-registry-sample-data
+```
+
+That job also creates the `pg_trgm` extension if it is missing — the API's
+migration builds a trigram index and fails with `operator class "gin_trgm_ops"
+does not exist` without it, which is easy to hit on a freshly created database.
+
+Locally the equivalent is:
+
+```bash
+./scripts/build-images.sh                     # build + tag, no push
+docker compose up -d --force-recreate         # containers keep the old image otherwise
+```
+
 ## Version pinning
 
 The `openg2p-registry` base image tag (`RP_VERSION` in each Dockerfile) and the
