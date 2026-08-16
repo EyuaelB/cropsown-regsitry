@@ -20,6 +20,11 @@
 ARG RP_VERSION=0.0.0-develop.296
 FROM openg2p/openg2p-registry-staff-ui:${RP_VERSION}
 
+# Browser-facing origin of the dashboard service. It is compiled into the client
+# bundle by patch-dashboard-nav.js below, so changing it needs a rebuild.
+ARG DASHBOARD_URL=http://dashboard.localtest.me:3021
+ARG DASHBOARD_LABEL=Dashboard
+
 # Keep the .png filename: it is hardcoded in the compiled CSS. The bytes are a
 # JPEG; browsers sniff the content type, so it renders regardless of extension.
 COPY docker/staff-ui/assets/bg_pattern.png /app/public/images/common/bg_pattern.png
@@ -61,3 +66,11 @@ RUN node /tmp/patch-geo-endpoint.js
 # the cascading address widget gets "Invalid Input. Field required".
 COPY --chown=nextjs docker/staff-ui/assets/patch-geo-envelope.js /tmp/patch-geo-envelope.js
 RUN node /tmp/patch-geo-envelope.js
+
+# ── Add the Dashboard header button ─────────────────────────────────────────
+# Puts a Dashboard control immediately left of Configuration, pointing at the
+# dashboard-ui service. The dashboard is a separate origin, so the target is
+# baked in here rather than resolved as a portal route.
+COPY --chown=nextjs docker/staff-ui/assets/patch-dashboard-nav.js /tmp/patch-dashboard-nav.js
+RUN DASHBOARD_URL="${DASHBOARD_URL}" DASHBOARD_LABEL="${DASHBOARD_LABEL}" \
+    node /tmp/patch-dashboard-nav.js
