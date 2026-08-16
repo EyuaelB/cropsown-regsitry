@@ -56,6 +56,12 @@ Every field, section and tab carries a human-readable label. Catalogs and lookup
 tables from the ERD are seeded as attribute lookups — see
 [cropsown-extension/README.md](cropsown-extension/README.md) for the full mapping.
 
+## Documentation
+
+- [The Record Photo Chain](docs/record-photo-chain.md) — how record photos
+  reach the browser, and the five places that chain breaks. Registry-agnostic;
+  useful to any OpenG2P registry wiring up images.
+
 ## Run it locally
 
 ```bash

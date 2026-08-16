@@ -68,7 +68,7 @@ registry:
     idGenerator:
       appConfig:
         # padding 5, matching the ATI ir.sequence definitions
-        # (CROP/REG/2026/00012).
+        # (REG/S1/2026/00012 — the S1-S4 segment is the cropping season).
         idTypes:
           cropsown:
             idLength: 5

@@ -42,6 +42,7 @@ class G2PSchemaCropSown:
     # Record lifecycle & field staff
     status: Optional[str] = None
     production_year: Optional[str] = None
+    season: Optional[str] = None
     lifecycle_stage: Optional[LifecycleStageEnum] = None
     surveyor_name: Optional[str] = None
     surveyor_mobile_number: Optional[str] = None
