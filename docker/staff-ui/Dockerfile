@@ -24,11 +24,6 @@ FROM openg2p/openg2p-registry-staff-ui:${RP_VERSION}
 # JPEG; browsers sniff the content type, so it renders regardless of extension.
 COPY docker/staff-ui/assets/bg_pattern.png /app/public/images/common/bg_pattern.png
 
-# Demo farmer photos. The `profile` widget uses its bound field value directly
-# as the <img src>, with no document-id resolution step, so the field has to
-# hold a fetchable URL. Serving them from the portal's own origin keeps the
-# MinIO documents bucket private and avoids presigned-URL expiry.
-COPY docker/staff-ui/assets/records/ /app/public/images/records/
 
 # The compiled CSS expects a small tiling pattern and clips the page shell, so
 # a photograph needs `cover` and the shell needs to scroll. Tailwind is compiled

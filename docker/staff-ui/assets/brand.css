@@ -47,3 +47,31 @@
     opacity: 1 !important;
   }
 }
+
+/* ── File upload control ────────────────────────────────────────────────────
+   The portal sizes the "Upload File" label with `width:100%; max-width:180px`
+   and `justify-content: space-between`, which assumes a wide column. In a
+   narrower one it shrinks below its own content and the upload icon rides out
+   over the border.
+
+   `width: max-content` sizes the control to exactly what is inside it, and
+   `flex-shrink: 0` stops a flex parent squeezing it again. The width and
+   max-width are inline styles on the element, so both need !important. */
+label.cursor-pointer.inline-flex.items-center.justify-between {
+  width: max-content !important;
+  max-width: none !important;
+  min-width: 9.5rem;
+  flex-shrink: 0;
+  justify-content: flex-start !important;
+  gap: 0.5rem;
+  overflow: visible;
+}
+
+label.cursor-pointer.inline-flex.items-center.justify-between > span {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+label.cursor-pointer.inline-flex.items-center.justify-between > img {
+  flex-shrink: 0;
+}

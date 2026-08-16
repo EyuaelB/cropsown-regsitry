@@ -113,6 +113,58 @@ class G2PRegisterDomainServiceCropSown(G2PRegisterDomainService):
         await self._check_unique_farmer_per_year(change_request, session)
         await self._check_crop_area_within_plot(change_request, session)
         await self._refresh_admin_names(change_request, session)
+        await self._adopt_uploaded_photo(change_request, session)
+
+    async def _adopt_uploaded_photo(
+        self, change_request: G2PRegisterChangeRequest, session: AsyncSession
+    ) -> None:
+        """Promote a photo uploaded on the form to the record's avatar.
+
+        A file widget stores its upload as a *section document* — the submit
+        flow posts `documents: [{document_id, label}]` and never touches
+        `record_image_document_id`, which is the field the profile widget and
+        the record tree read. So an uploaded photo is saved but invisible.
+
+        This bridges the two: on approval, if the record has no avatar yet, the
+        earliest image attached to it becomes one. Records that already have an
+        avatar are left alone, so re-approving cannot swap someone's photo.
+        """
+        from openg2p_registry_core.models import (
+            G2PRegisterSectionDocument,
+            G2PRegistryDocument,
+        )
+
+        from ..models import G2PRegisterCropSown
+
+        record = await session.get(G2PRegisterCropSown, change_request.internal_record_id)
+        if record is None or record.record_image_document_id:
+            return
+
+        row = (
+            await session.execute(
+                select(G2PRegistryDocument)
+                .join(
+                    G2PRegisterSectionDocument,
+                    G2PRegisterSectionDocument.document_id
+                    == G2PRegistryDocument.document_id,
+                )
+                .where(
+                    G2PRegisterSectionDocument.internal_record_id
+                    == change_request.internal_record_id
+                )
+                .where(G2PRegistryDocument.bucket == "documents")
+                .order_by(G2PRegistryDocument.created_at)
+            )
+        ).scalars().first()
+
+        if row is not None and self._is_image(row.source_filename):
+            record.record_image_document_id = row.document_id
+
+    @staticmethod
+    def _is_image(filename: str | None) -> bool:
+        return str(filename or "").lower().endswith(
+            (".jpg", ".jpeg", ".png", ".webp", ".gif")
+        )
 
     async def _refresh_admin_names(
         self, change_request: G2PRegisterChangeRequest, session: AsyncSession

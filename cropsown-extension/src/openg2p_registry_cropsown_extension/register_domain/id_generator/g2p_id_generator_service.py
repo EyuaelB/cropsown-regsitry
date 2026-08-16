@@ -6,34 +6,53 @@ from openg2p_registry_core.models.g2p_register import G2PRegister
 
 
 class G2PIdGeneratorService(BaseService, G2PIdGeneratorInterface):
-    """Functional-id affixes, matching the ATI sequences the Odoo registry uses.
+    """Functional-id affixes for the crop sown registers.
 
-    `data/ir_sequence_data.xml` defines the formats operators already recognise:
+    A crop sown id carries the season it belongs to:
 
-        g2p.crop.registry     CROP/REG/%(year)s/   padding 5   CROP/REG/2026/00012
-        g2p.crop.production   CROP/PROD/%(year)s/  padding 5
-        g2p.cluster           CLTR/%(year)s/       padding 5
-        g2p.crop.infestation  PI/%(year)s/         padding 5
+        REG/S1/2026/00012
+
+    The season segment is S1-S4, one per cropping season, taken from the
+    record's own `season`. A record with no season yet falls back to the
+    seasonless form (REG/2026/00012) rather than guessing a number.
 
     The year is resolved when the id is minted, so a record created in 2027
-    carries CROP/REG/2027/. The padding is the id-generator pool's idLength
-    (5), set in the Helm values.
+    carries /2027/. The padding is the id-generator pool's idLength (5), set in
+    the Helm values.
     """
 
-    # register mnemonic -> sequence prefix, minus the year segment
+    # register mnemonic -> sequence prefix, minus the season and year segments
     PREFIXES = {
-        "cropsown": "CROP/REG",
+        "cropsown": "REG",
         "production": "CROP/PROD",
         "cluster": "CLTR",
         "infestation": "PI",
     }
 
+    # Ethiopian cropping calendar order: the main rains first, then the short
+    # rains, then irrigated and perennial cropping.
+    SEASON_NUMBERS = {
+        "CROP_SEASON_MEHER": 1,
+        "CROP_SEASON_BELG": 2,
+        "CROP_SEASON_IRRIGATION": 3,
+        "CROP_SEASON_PERENNIAL": 4,
+    }
+
+    @classmethod
+    def season_segment(cls, season: str | None) -> str:
+        """`CROP_SEASON_MEHER` -> `S1/`, unknown or missing -> `` (no segment)."""
+        number = cls.SEASON_NUMBERS.get(str(season or "").strip().upper())
+        return f"S{number}/" if number else ""
+
     def generate_prefix_suffix(
         self, g2p_register: G2PRegister, register_mnemonic: str
     ) -> IdAffix:
         mnemonic = (register_mnemonic or "").lower()
+        season = self.season_segment(getattr(g2p_register, "season", None))
+        year = date.today().year
+
         prefix = self.PREFIXES.get(mnemonic)
         if prefix:
-            return IdAffix(prefix=f"{prefix}/{date.today().year}/", suffix="")
+            return IdAffix(prefix=f"{prefix}/{season}{year}/", suffix="")
 
-        return IdAffix(prefix=f"CROP/{mnemonic.upper() or 'REC'}/{date.today().year}/", suffix="")
+        return IdAffix(prefix=f"CROP/{mnemonic.upper() or 'REC'}/{season}{year}/", suffix="")
